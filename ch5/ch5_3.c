@@ -1,46 +1,123 @@
-#include <unistd.h>
-#include <string.h>
 #include <fcntl.h>
-#include <sys/wait.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-typedef enum{
-    IPC_METHOD_MSG_PIPE,
-    IPC_METHOD_MSG_FIFO,
-    IPC_METHOD_MSG_SOCKET,
-    IPC_METHOD_MSG_SYS_V_MQ,
-    IPC_METHOD_MSG_POSIX_MQ,
-    IPC_METHOD_MSG_SIGNAL,
-    IPC_METHOD_SHM_SYS_V,
-    IPC_METHOD_SHM_POSIX,
-    IPC_METHOD_SHM_MMAP,
-} IPC_METHOD_T;
+#include "ch5_3.h"
 
-int 
-wait_child_process(IPC_METHOD_T ipc_method)
+/* IPC_METHOD_PIPE */
+static inline int *
+prepare_for_pipe ()
 {
-    switch(ipc_method)
+  int *pipe_fd = malloc (sizeof (int) << 1);
+  int flags;
+  if (pipe (pipe_fd) < 0)
     {
-        
+      return NULL;
     }
-    
+  flags = fcntl(pipe_fd[0], F_GETFL, 0);
+  flags |= O_NONBLOCK;
+  fcntl (pipe_fd[0], F_SETFL, flags);
+  return pipe_fd;
 }
+
+static inline void
+wait_implement_by_pipe (void *pipe_fd)
+{
+  char single_c[1];
+  int x = 1;
+  
+  close (((int *)pipe_fd)[1]);
+  while (x)
+    {
+      x = read (((int *)pipe_fd)[0], single_c, 1);
+    //   if (x == -1)
+    //     perror ("read error");
+    }
+  close(((int *)pipe_fd)[0]);
+}
+
+static inline void
+child_end_implement_by_pipe (void *pipe_fd)
+{
+  close (((int *)pipe_fd)[1]);
+}
+
+/* IPC_METHOD_FIFO */
+static inline int *
+prepare_for_fifo ()
+{
+  int *pipe_fd = malloc (sizeof (int) << 1);
+  int flags;
+  if (pipe (pipe_fd) < 0)
+    {
+      return NULL;
+    }
+  flags = fcntl(pipe_fd[0], F_GETFL, 0);
+  flags |= O_NONBLOCK;
+  fcntl (pipe_fd[0], F_SETFL, flags);
+  return pipe_fd;
+}
+
+static inline void
+wait_implement_by_fifo (void *pipe_fd)
+{
+  char single_c[1];
+  int x = 1;
+  
+  close (((int *)pipe_fd)[1]);
+  while (x)
+    {
+      x = read (((int *)pipe_fd)[0], single_c, 1);
+    //   if (x == -1)
+    //     perror ("read error");
+    }
+  close(((int *)pipe_fd)[0]);
+}
+
+static inline void
+child_end_implement_by_fifo (void *pipe_fd)
+{
+  close (((int *)pipe_fd)[1]);
+}
+
+const wait_method_t method_list[IPC_METHOD_MAX] = {
+    [IPC_METHOD_PIPE] = {
+        .prepare_for_wait_func = prepare_for_pipe,
+        .wait_child_func = wait_implement_by_pipe,
+        .child_end_func = child_end_implement_by_pipe,
+    },
+    [IPC_METHOD_FIFO] = {
+        .prepare_for_wait_func = prepare_for_fifo,
+        .wait_child_func = wait_implement_by_fifo,
+        .child_end_func = child_end_implement_by_fifo,
+    },
+
+
+};
 
 int
 main (int argc, char *argv[])
 {
-    int x = 100;
-    int rc = 0;
-    if (rc = fork())
+  int x = 100;
+  int rc = 0;
+  IPC_METHOD_T method = IPC_METHOD_PIPE;
+  void *wait_ctx = prepare_for_wait (method);
+  if (rc = fork ())
     {
-        printf("in parent process\n");
-        wait_child_process();
-        printf("goodbye\n");
+      printf ("in parent process\n");
+      wait_child_process (method, wait_ctx);
+      printf ("goodbye\n");
+      free (wait_ctx);
     }
-    else
+  else
     {
-        printf("in child process\n");
-        printf("hello\n");
+      printf ("in child process\n");
+      printf ("hello\n");
+      child_end (method, wait_ctx);
+      free (wait_ctx);
     }
-    return 0;
+  return 0;
 }
