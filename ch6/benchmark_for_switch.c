@@ -89,8 +89,8 @@ main (int argc, char *argv[])
     }
 
   gettimeofday (&start_tv, NULL);
-  clock_gettime (CLOCK_REALTIME, &start_ts);
-  start_cycle = clib_cpu_time_now ();
+  clock_gettime (CLOCK_REALTIME, &start_ts); // 所有CPU上一致
+  start_cycle = clib_cpu_time_now (); // 每个CPU有自己的TSC（time stamp counter）
 
   /* parent process */
   switch_bench (pipe_fd0[1], pipe_fd1[0]);
