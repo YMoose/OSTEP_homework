@@ -76,8 +76,6 @@ parser.add_option('-c', help='compute answers for me', action='store_true',
 
 (options, args) = parser.parse_args()
 
-random.seed(options.seed)
-
 # MLFQ: How Many Queues
 numQueues = options.numQueues
 
@@ -167,37 +165,37 @@ else:
 
 numJobs = len(job)
 
-print 'Here is the list of inputs:'
-print 'OPTIONS jobs',            numJobs
-print 'OPTIONS queues',          numQueues
+print ('Here is the list of inputs:')
+print ('OPTIONS jobs',            numJobs)
+print ('OPTIONS queues',          numQueues)
 for i in range(len(quantum)-1,-1,-1):
-    print 'OPTIONS allotments for queue %2d is %3d' % (i, allotment[i])
-    print 'OPTIONS quantum length for queue %2d is %3d' % (i, quantum[i])
-print 'OPTIONS boost',           options.boost
-print 'OPTIONS ioTime',          options.ioTime
-print 'OPTIONS stayAfterIO',     options.stay
-print 'OPTIONS iobump',          options.iobump
+    print ('OPTIONS allotments for queue %2d is %3d' % (i, allotment[i]))
+    print ('OPTIONS quantum length for queue %2d is %3d' % (i, quantum[i]))
+print ('OPTIONS boost',           options.boost)
+print ('OPTIONS ioTime',          options.ioTime)
+print ('OPTIONS stayAfterIO',     options.stay)
+print ('OPTIONS iobump',          options.iobump)
 
-print '\n'
-print 'For each job, three defining characteristics are given:'
-print '  startTime : at what time does the job enter the system'
-print '  runTime   : the total CPU time needed by the job to finish'
-print '  ioFreq    : every ioFreq time units, the job issues an I/O'
-print '              (the I/O takes ioTime units to complete)\n'
+print ('\n')
+print ('For each job, three defining characteristics are given:')
+print ('  startTime : at what time does the job enter the system')
+print ('  runTime   : the total CPU time needed by the job to finish')
+print ('  ioFreq    : every ioFreq time units, the job issues an I/O')
+print ('              (the I/O takes ioTime units to complete)\n')
 
-print 'Job List:'
+print ('Job List:')
 for i in range(numJobs):
-    print '  Job %2d: startTime %3d - runTime %3d - ioFreq %3d' % (i, job[i]['startTime'],
+    print ('  Job %2d: startTime %3d - runTime %3d - ioFreq %3d' % (i, job[i]['startTime'],
                                                                    job[i]['runTime'],
-                                                                   job[i]['ioFreq'])
-print ''
+                                                                   job[i]['ioFreq']))
+print ('')
 
 if options.solve == False:
-    print 'Compute the execution trace for the given workloads.'
-    print 'If you would like, also compute the response and turnaround'
-    print 'times for each of the jobs.'
-    print ''
-    print 'Use the -c flag to get the exact results when you are finished.\n'
+    print ('Compute the execution trace for the given workloads.')
+    print ('If you would like, also compute the response and turnaround')
+    print ('times for each of the jobs.')
+    print ('')
+    print ('Use the -c flag to get the exact results when you are finished.\n')
     exit(0)
 
 # initialize the MLFQ queues
@@ -212,7 +210,7 @@ currTime = 0
 totalJobs    = len(job)
 finishedJobs = 0
 
-print '\nExecution Trace:\n'
+print ('\nExecution Trace:\n')
 
 while finishedJobs < totalJobs:
     # find highest priority job
@@ -223,7 +221,7 @@ while finishedJobs < totalJobs:
     # check for priority boost
     if options.boost > 0 and currTime != 0:
         if currTime % options.boost == 0:
-            print '[ time %d ] BOOST ( every %d )' % (currTime, options.boost)
+            print ('[ time %d ] BOOST ( every %d )' % (currTime, options.boost))
             # remove all jobs from queues (except high queue) and put them in high queue
             for q in range(numQueues-1):
                 for j in queue[q]:
@@ -235,19 +233,19 @@ while finishedJobs < totalJobs:
             # reset number of ticks left for all jobs (just for lower jobs?)
             # add to highest run queue (if not doing I/O)
             for j in range(numJobs):
-                # print '-> Boost %d (timeLeft %d)' % (j, job[j]['timeLeft'])
+                # print ('-> Boost %d (timeLeft %d)' % (j, job[j]['timeLeft'])
                 if job[j]['timeLeft'] > 0:
-                    # print '-> FinalBoost %d (timeLeft %d)' % (j, job[j]['timeLeft'])
+                    # print ('-> FinalBoost %d (timeLeft %d)' % (j, job[j]['timeLeft'])
                     job[j]['currPri']   = hiQueue
                     job[j]['ticksLeft'] = allotment[hiQueue]
-            # print 'BOOST END: QUEUES look like:', queue
+            # print ('BOOST END: QUEUES look like:', queue
 
     # check for any I/Os done
     if currTime in ioDone:
         for (j, type) in ioDone[currTime]:
             q = job[j]['currPri']
             job[j]['doingIO'] = False
-            print '[ time %d ] %s by JOB %d' % (currTime, type, j)
+            print ('[ time %d ] %s by JOB %d' % (currTime, type, j))
             if options.iobump == False or type == 'JOB BEGINS':
                 queue[q].append(j)
             else:
@@ -256,7 +254,7 @@ while finishedJobs < totalJobs:
     # now find the highest priority job
     currQueue = FindQueue()
     if currQueue == -1:
-        print '[ time %d ] IDLE' % (currTime)
+        print ('[ time %d ] IDLE' % (currTime))
         currTime += 1
         continue
             
@@ -277,8 +275,8 @@ while finishedJobs < totalJobs:
     allotLeft = job[currJob]['allotLeft']
     timeLeft  = job[currJob]['timeLeft']
 
-    print '[ time %d ] Run JOB %d at PRIORITY %d [ TICKS %d ALLOT %d TIME %d (of %d) ]' % \
-          (currTime, currJob, currQueue, ticksLeft, allotLeft, timeLeft, runTime)
+    print ('[ time %d ] Run JOB %d at PRIORITY %d [ TICKS %d ALLOT %d TIME %d (of %d) ]' % \
+          (currTime, currJob, currQueue, ticksLeft, allotLeft, timeLeft, runTime))
 
     if timeLeft < 0:
         Abort('Error: should never have less than 0 time left to run')
@@ -289,12 +287,12 @@ while finishedJobs < totalJobs:
 
     # CHECK FOR JOB ENDING
     if timeLeft == 0:
-        print '[ time %d ] FINISHED JOB %d' % (currTime, currJob)
+        print ('[ time %d ] FINISHED JOB %d' % (currTime, currJob))
         finishedJobs += 1
         job[currJob]['endTime'] = currTime
-        # print 'BEFORE POP', queue
+        # print ('BEFORE POP', queue
         done = queue[currQueue].pop(0)
-        # print 'AFTER POP', queue
+        # print ('AFTER POP', queue
         assert(done == currJob)
         continue
 
@@ -302,7 +300,7 @@ while finishedJobs < totalJobs:
     issuedIO = False
     if ioFreq > 0 and (((runTime - timeLeft) % ioFreq) == 0):
         # time for an IO!
-        print '[ time %d ] IO_START by JOB %d' % (currTime, currJob)
+        print ('[ time %d ] IO_START by JOB %d' % (currTime, currJob))
         issuedIO = True
         desched = queue[currQueue].pop(0)
         assert(desched == currJob)
@@ -315,7 +313,7 @@ while finishedJobs < totalJobs:
         futureTime = currTime + ioTime
         if futureTime not in ioDone:
             ioDone[futureTime] = []
-        print 'IO DONE'
+        print ('IO DONE')
         ioDone[futureTime].append((currJob, 'IO_DONE'))
         
     # CHECK FOR QUANTUM ENDING AT THIS LEVEL (BUT REMEMBER, THERE STILL MAY BE ALLOTMENT LEFT)
@@ -351,20 +349,20 @@ while finishedJobs < totalJobs:
 
 
 # print out statistics
-print ''
-print 'Final statistics:'
+print ('')
+print ('Final statistics:')
 responseSum   = 0
 turnaroundSum = 0
 for i in range(numJobs):
     response   = job[i]['firstRun'] - job[i]['startTime']
     turnaround = job[i]['endTime'] - job[i]['startTime']
-    print '  Job %2d: startTime %3d - response %3d - turnaround %3d' % (i, job[i]['startTime'],
-                                                                        response, turnaround)
+    print ('  Job %2d: startTime %3d - response %3d - turnaround %3d' % (i, job[i]['startTime'],
+                                                                        response, turnaround))
     responseSum   += response
     turnaroundSum += turnaround
 
-print '\n  Avg %2d: startTime n/a - response %.2f - turnaround %.2f' % (i, 
+print ('\n  Avg %2d: startTime n/a - response %.2f - turnaround %.2f' % (i, 
                                                                         float(responseSum)/numJobs,
-                                                                        float(turnaroundSum)/numJobs)
+                                                                        float(turnaroundSum)/numJobs))
 
-print '\n'
+print ('\n')
