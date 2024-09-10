@@ -1,9 +1,15 @@
 #! /usr/bin/env python
-
+import matplotlib.pyplot as plt
 from tkinter import *
 from types import *
 import math, random, time, sys, os
 from optparse import OptionParser
+
+w_list = []
+seek_list = []
+rotate_list = []
+transfer_list = []
+total_list = []
 
 MAXTRACKS = 1000
 
@@ -47,7 +53,7 @@ class Disk:
         self.compute           = compute
         self.graphics          = graphics
         self.zoning            = zoning
-
+        print(self.window)
         # figure out zones first, to figure out the max possible request
         self.InitBlockLayout()
         
@@ -682,6 +688,10 @@ class Disk:
         
 
     def PrintStats(self):
+        seek_list.append(self.seekTotal)
+        rotate_list.append(self.rotTotal)
+        transfer_list.append(self.xferTotal)
+        total_list.append(self.timer)
         if self.compute == True:
             print ('\nTOTALS      Seek:%3d  Rotate:%3d  Transfer:%3d  Total:%4d\n' % (self.seekTotal, self.rotTotal, self.xferTotal, self.timer))
         
@@ -732,9 +742,33 @@ if options.graphics and options.compute == False:
     options.compute = True
 
 # set up simulator info
-d = Disk(addr=options.addr, addrDesc=options.addrDesc, lateAddr=options.lateAddr, lateAddrDesc=options.lateAddrDesc,
+if options.window > 1:
+    i = 1
+    while i < options.window:
+        d = Disk(addr=options.addr, addrDesc=options.addrDesc, lateAddr=options.lateAddr, lateAddrDesc=options.lateAddrDesc,
+         policy=options.policy, seekSpeed=float(options.seekSpeed), rotateSpeed=float(options.rotateSpeed),
+         skew=options.skew, window=i, compute=options.compute, graphics=options.graphics, zoning=options.zoning)
+        d.Go()
+        w_list.append(i)
+        i = i + 1
+else:
+    d = Disk(addr=options.addr, addrDesc=options.addrDesc, lateAddr=options.lateAddr, lateAddrDesc=options.lateAddrDesc,
          policy=options.policy, seekSpeed=float(options.seekSpeed), rotateSpeed=float(options.rotateSpeed),
          skew=options.skew, window=options.window, compute=options.compute, graphics=options.graphics, zoning=options.zoning)
+    w_list.append(options.window)
+    # run simulation
+    d.Go()
 
-# run simulation
-d.Go()
+plt.plot(w_list, seek_list, label = "seek time")
+plt.plot(w_list, rotate_list, label = "rotate time")
+plt.plot(w_list, transfer_list, label = "transfer time")
+plt.plot(w_list, total_list, label = "total time")
+
+plt.title("g")
+plt.xlabel("w")
+plt.ylabel("time unit")
+# 添加图例
+plt.legend()
+
+# 显示图形
+plt.show()
